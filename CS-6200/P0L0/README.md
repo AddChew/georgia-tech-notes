@@ -1,6 +1,6 @@
-# Lecture 0
+# C Programming
 
-## How to compile C code
+## How to compile and run C code
 
 By convention C source code files are named with .c extension, i.e. hello.c. But during compilation, we do not specify the .c extension.
 
@@ -107,3 +107,40 @@ int main(void)
 ### Linked list
 
 Reference: https://www.thegeekstuff.com/2012/08/c-linked-list-example/
+
+### Date and time
+
+Reference: https://www.w3schools.com/c/c_date_time.php
+
+Use <time.h> library.
+
+### Random numbers
+
+Reference: https://www.tutorialspoint.com/c_standard_library/c_function_rand.htm
+
+Use rand() function in <stdlib.h> library.
+
+### String functions
+
+Reference: https://en.wikibooks.org/wiki/A_Little_C_Primer/C_String_Function_Library
+
+# C++ Programming
+
+## How to compile and run C++ code
+
+By convention C++ source code files are named with .cpp extension, i.e. hello.cpp.
+
+```bash
+# Command to compile hello.cpp
+g++ hello.cpp -o hello # output file will be hello
+
+# Command to run hello
+./hello
+```
+
+References:
+- [C++ strings](https://en.wikibooks.org/wiki/C%2B%2B_Programming/Code/IO/Streams/string)
+- [C++ OOP](https://www.w3schools.com/cpp/cpp_oop.asp)
+- [C++ class](https://en.wikibooks.org/wiki/C%2B%2B_Programming/Classes)
+- [C++ pointers](https://www.tutorialspoint.com/pointers-smart-pointers-and-shared-pointers-in-cplusplus)
+- [C++ lock guard](https://en.cppreference.com/w/cpp/thread/lock_guard.html)

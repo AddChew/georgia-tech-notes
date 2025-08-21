@@ -2,10 +2,11 @@
 
 ## How to compile and run C code
 
-By convention C source code files are named with .c extension, i.e. hello.c. But during compilation, we do not specify the .c extension.
+By convention C source code files are named with .c extension, i.e. hello.c. But during compilation, we do not specify the .c extension if using make.
 
 ```bash
 # Command to compile hello.c
+# Same as: gcc hello.c -o hello
 make hello # output file will be hello
 
 # Command to run hello
@@ -128,11 +129,12 @@ Reference: https://en.wikibooks.org/wiki/A_Little_C_Primer/C_String_Function_Lib
 
 ## How to compile and run C++ code
 
-By convention C++ source code files are named with .cpp extension, i.e. hello.cpp.
+By convention C++ source code files are named with .cpp extension, i.e. hello.cpp. But during compilation, we do not specify the .cpp extension if using make.
 
 ```bash
 # Command to compile hello.cpp
-g++ hello.cpp -o hello # output file will be hello
+# Same as: g++ class.cpp -o class
+make hello # output file will be hello
 
 # Command to run hello
 ./hello

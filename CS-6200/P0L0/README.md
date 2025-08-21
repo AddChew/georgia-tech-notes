@@ -1,5 +1,17 @@
 # Lecture 0
 
+## How to compile C code
+
+By convention C source code files are named with .c extension, i.e. hello.c. But during compilation, we do not specify the .c extension.
+
+```bash
+# Command to compile hello.c
+make hello # output file will be hello
+
+# Command to run hello
+./hello
+```
+
 ## Crash Course
 
 ### Pointers
@@ -62,18 +74,36 @@ int main(void)
 // If we specify the format specifier as '%s' and use 'ptr' (which contains the starting address of the string), then the complete string is printed using printf.
 ```
 
+#### Structure Objects
+
+```c
+// -> arrow operator is used to access the values of struct attributes from the struct pointer (memory address)
+// . dot operator is used to access the values of struct attributes from itself
+
+#include<stdio.h> 
+
+struct st{ 
+int a; 
+char ch; 
+}; 
+
+int main(void) 
+{ 
+    struct st obj; 
+    struct st *stobj = &obj; 
+
+    stobj->a = 5; 
+    stobj->ch = 'a'; 
+
+    printf("\n [%d] [%c]\n", stobj->a, stobj->ch); 
+    printf("\n [%d] [%c]\n", obj.a, obj.ch); // stobj->a == obj.a, stobj->ch == obj.ch
+    return 0; 
+}
+
+// Output:  [5] [a]
+// Output:  [5] [a]
+```
+
 ### Linked list
 
 Reference: https://www.thegeekstuff.com/2012/08/c-linked-list-example/
-
-## How to compile C code
-
-By convention C source code files are named with .c extension, i.e. hello.c. But during compilation, we do not specify the .c extension.
-
-```bash
-# Command to compile hello.c
-make hello # output file will be hello
-
-# Command to run hello
-./hello
-```

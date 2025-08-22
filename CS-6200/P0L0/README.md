@@ -140,9 +140,94 @@ make hello # output file will be hello
 ./hello
 ```
 
+## Crash Course
+
 References:
 - [C++ strings](https://en.wikibooks.org/wiki/C%2B%2B_Programming/Code/IO/Streams/string)
 - [C++ OOP](https://www.w3schools.com/cpp/cpp_oop.asp)
 - [C++ class](https://en.wikibooks.org/wiki/C%2B%2B_Programming/Classes)
 - [C++ pointers](https://www.tutorialspoint.com/pointers-smart-pointers-and-shared-pointers-in-cplusplus)
 - [C++ lock guard](https://en.cppreference.com/w/cpp/thread/lock_guard.html)
+
+### Class Inheritance
+
+Public: Classes which inherit with the keyword public from a base class inherit all the public members as public members. 
+
+Protected: Inherited as protected data.
+
+Private: Inherited but not directly accessible by the child class
+
+```cpp
+class Form {
+private:
+  double area;
+
+public:
+  int color;
+
+  double getArea(){
+    return this->area; // this keyword acts as a pointer to the class itself (i.e. analogous to self in Python)
+  }
+
+  void setArea(double area){
+    this->area = area;
+  }
+
+};
+
+// Child class Circle inherits private attribute area from base class Form but cannot access it directly, have to use getter and setter functions to access it
+class Circle : public Form {
+public:
+  double getRadius() {
+    double a;
+    a = getArea();
+    return sqrt(a / 2 * 3.14);
+  }
+
+  void setRadius(double diameter) {
+    setArea( pow(diameter * 0.5, 2) * 3.14 );
+  }
+
+  bool isDark() {
+    return (color > 10);
+  }
+
+};
+```
+
+#### Params in Constructor
+
+```cpp
+// Inheritance with Parent class that requires parameters in contructor
+ChildClass::ChildClass(int a, int b) : ParentClass(a, b)
+{
+  //Child constructor here
+}
+```
+
+#### Static
+
+Use of static keyword for a data member will cause that member to be shared by all instances of the owner and derived classes. Analogous to global variable in Python.
+
+```cpp
+class Foo {
+public:
+  Foo() {
+    ++iNumFoos;
+    cout << "We have now created " << iNumFoos << " instances of the Foo class\n";
+  }
+private:
+  static int iNumFoos;
+};
+
+int Foo::iNumFoos = 0;  // allocate memory for numFoos, and initialize it
+
+int main() {
+  Foo f1;
+  Foo f2;
+  Foo f3;
+}
+```
+
+# Makefile
+

@@ -231,3 +231,108 @@ int main() {
 
 # Makefile
 
+References:
+- https://web.archive.org/web/20200706225945/http://mrbook.org/blog/tutorials/make/
+- https://web.archive.org/web/20200706225945/http://www.gnu.org/software/make/manual/make.html
+
+By default, make command will look for a file named makefile in current directory and execute it.
+
+```bash
+# Use this command if you have several makefiles or makefile with a different name
+# make -f <name of make file>
+make -f MyMakefile
+```
+
+## Build Process
+
+1. Compiler takes the source files and outputs object files
+2. Linker takes the object files and creates an executable
+
+## Basic makefile
+
+```bash
+# Manual compiling
+g++ main.cpp hello.cpp factorial.cpp -o hello
+```
+
+Basic makefile is composed of:
+```Makefile
+target: dependencies
+    system command
+```
+
+In the example below, our target is called all, which is the default target for makefiles. make will execute this target if none is specified. There are no dependencies for target all in this example.
+```Makefile
+# Save to Makefile-1
+all:
+    g++ main.cpp hello.cpp factorial.cpp -o hello
+```
+
+To run makefile
+```bash
+make -f Makefile-1
+```
+
+## Using dependencies
+
+Using different targets allows us to recompile only the files that we modified, instead of recompiling everything.
+
+Now we see that the target all has only dependencies, but no system commands. In order for make to execute correctly, it has to meet all the dependencies of the called target (in this case all).
+
+Each of the dependencies are searched through all the targets available and executed if found.
+
+Useful to include clean target for a fast way to get rid of all the object files and executables.
+
+```Makefile
+all: hello
+
+hello: main.o factorial.o hello.o
+    g++ main.o factorial.o hello.o -o hello
+
+main.o: main.cpp
+    g++ -c main.cpp
+
+factorial.o: factorial.cpp
+    g++ -c factorial.cpp
+
+hello.o: hello.cpp
+    g++ -c hello.cpp
+
+clean:
+    rm *o hello
+```
+
+```bash
+# Sample commands
+make -f Makefile-2 main.o
+make -f Makefile-2 hello.o
+make -f Makefile-2 clean
+```
+
+## Using variables and comments
+
+```Makefile
+# I am a comment, and I want to say that the variable CC will be
+# the compiler to use.
+CC=g++
+# Hey!, I am comment number 2. I want to say that CFLAGS will be the
+# options I'll pass to the compiler.
+CFLAGS=-c -Wall
+
+all: hello
+
+hello: main.o factorial.o hello.o
+    $(CC) main.o factorial.o hello.o -o hello
+
+main.o: main.cpp
+    $(CC) $(CFLAGS) main.cpp
+
+factorial.o: factorial.cpp
+    $(CC) $(CFLAGS) factorial.cpp
+
+hello.o: hello.cpp
+    $(CC) $(CFLAGS) hello.cpp
+
+clean:
+    rm *o hello
+```

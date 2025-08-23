@@ -43,10 +43,10 @@ Policies
 Abstractions
 - Memory page
 
-Mechanisms
+Mechanisms - allow you to manipulate the abstractions
 - allocate, map to a process (allow process to access memory corresponding to page)
 
-Policies
+Policies - specify how the abstractions can be modified
 - least recently used (LRU) - decide whether to store data on memory (DRAM) or disk (memory swapping)
 
 ## OS Design Principles
@@ -156,5 +156,5 @@ Pros
 - Easy to test and verify whether working as expected
 
 Cons
-- Portability - typically very specialized
+- Portability - typically very specialized and customized to the underlying hardware
 - Cost of user kernel crossing

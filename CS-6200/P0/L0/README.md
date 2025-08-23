@@ -111,7 +111,9 @@ Reference: https://www.thegeekstuff.com/2012/08/c-linked-list-example/
 
 ### Date and time
 
-Reference: https://www.w3schools.com/c/c_date_time.php
+Reference: 
+- https://www.w3schools.com/c/c_date_time.php
+- https://web.archive.org/web/20250326205729/http://www.codingunit.com/c-tutorial-how-to-use-time-and-date-in-c
 
 Use <time.h> library.
 

@@ -77,3 +77,33 @@ Trying to access hardware directly in user mode will result in a trap; applicati
 Interaction between OS and application is via system call interface - think of system call as the language used by application to communicate to OS.
 
 OS support signals - mechanism for OS to notify application
+
+### System call flowchart
+
+Reference: https://gatech.instructure.com/courses/467354/pages/12-system-call-flowchart?module_item_id=5282898
+
+In summary, there is a back and forth between user and kernel mode in terms of control to execute a user process. Interface is via system call.
+
+Synchronous mode: wait until system call is complete
+
+### Hardware cache
+
+User kernel transitions is not cheap. Because context switch will swap the data/address currently in the cache. 
+
+Hot cache = requested data/address is available in cache.
+
+Cold cache = requested data/address is unavailable in cache, have to retrieve from main memory
+
+## OS Services
+
+OS has to provide the following services:
+- Process management
+- File management
+- Device management
+- Memory management
+- Storage management
+- Security
+- ...
+
+OS provide these services via system calls.
+

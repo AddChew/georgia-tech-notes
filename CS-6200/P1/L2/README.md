@@ -103,7 +103,58 @@ OS has to provide the following services:
 - Memory management
 - Storage management
 - Security
+- Scheduling
 - ...
 
 OS provide these services via system calls.
 
+### Sample system calls in linux
+
+- Send signal to process: KILL
+- Set group identity of process: SETGID
+- Mount file system: MOUNT
+- Read/write system parameters: SYSCTL
+
+## OS types
+
+### Monolithic OS
+
+Pros
+- Everything included
+- Inlining, compile time optimization
+
+Cons
+- Customization, portability, manageability
+- Large, high memory footprint
+- Performance
+
+### Modular OS 
+
+More commonly used today.
+
+Uses a module interface layer for compatibility of different implementations of the module.
+
+Pros
+- Easier to maintain and upgrade
+- Smaller footprint
+- Less resource intensive, better performance possibility
+
+Cons
+- Have to go through interface layer before implementation layer of service, reduce some opportunity for optimizations and impact performance
+- Maintenance can be an issue as modules can be from disparate code bases and might have bugs
+
+### Microkernel
+
+Common in embedded systems.
+
+Only contains the basic primitives in OS level such as address space, threads and IPC (inter process communication).
+
+Everything else such as database, file system, disk driver will run outside kernel level, at user level. This means more user kernel context switching. 
+
+Pros
+- Small size, lower overhead and performance
+- Easy to test and verify whether working as expected
+
+Cons
+- Portability - typically very specialized
+- Cost of user kernel crossing

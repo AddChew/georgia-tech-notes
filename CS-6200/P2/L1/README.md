@@ -29,3 +29,37 @@ OS maintains information for every process that it manages in Process Control Bl
 Consists of components such as:
 - Program counter = which step of instruction sequence process is currently in
 - Stack pointer = points to top of stack
+
+For frequent state updates, information is saved to CPU register. During context switch (switch control to another process, swapping betwen processes), information from CPU register is saved to PCB. Information from PCB for the other process is loaded to CPU register.
+
+Context switch = switch CPU from context of one process to the context of another
+
+Context switching is expensive because:
+- Direct costs: number of cycles to load and store instructions (PCB and CPU register)
+- Indirect costs: cold cache (cache misses)
+
+Hot cache = data present in cache
+
+### Process Lifecycle
+
+States: Running, Idle (i.e. Ready state), Waiting, Terminated, New
+
+#### Creation
+
+Process (parent) can create child processes. Fork then exec.
+
+Mechanism for process creation:
+
+Fork
+- Copy values from parent PCB into child PCB 
+- Child continues execution at instruction after fork (child and parent share same program counter)
+
+Exec
+- Replace with child image (i.e. child PCB has own values distinct from parent)
+- Load new program and start from first instruction (fresh state, child has own program counter)
+
+In unix, "init" process is regarded as the "parent of all processes". Init is the first process that starts after system boots (PID 1). All other processes is forked from it.
+
+In android, "zygote" is regarded as the "parent of all app processes". Zygote process is forked every time a new process is created.
+
+### Process Scheduling

@@ -63,3 +63,18 @@ In unix, "init" process is regarded as the "parent of all processes". Init is th
 In android, "zygote" is regarded as the "parent of all app processes". Zygote process is forked every time a new process is created.
 
 ### Process Scheduling
+
+CPU can only execute ready processes. Multiple ready processes on the ready queue.
+
+CPU scheduler (OS component) determines which one of the currently ready processes will be dispatched to the CPU to start running, and how long it should run for.
+
+Role of OS - strive to minimize time spent on overhead operations below
+- Preempt = interupt currently executing process and save its current context
+- Schedule = run scheduler to choose next ready process to run
+- Dispatch = dispatch process onto CPU and switch into its context
+
+Scheduling Design Decisions
+- What are appropriate time slice values? Time slice = time allocated to process on CPU
+- Metrics to choose next process to run?
+
+### I/O

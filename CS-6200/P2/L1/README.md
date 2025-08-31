@@ -77,4 +77,27 @@ Scheduling Design Decisions
 - What are appropriate time slice values? Time slice = time allocated to process on CPU
 - Metrics to choose next process to run?
 
-### I/O
+How processes end up on ready queue
+- I/O request -> I/O queue -> I/O fulfilled
+- time slice expired
+- fork child
+- interupt
+
+### Inter Process Communication (IPC)
+
+Role of IPC mechanism
+- transfer data/information between address spaces
+- maintain protection and isolation
+- provide flexibilty and performance
+
+Message-passing IPC
+- OS provides communication channel like shared buffer
+- Processes write (send) and read (receive) messages to/from channel
+- Pros: OS manages the channel, provides the standardized same API for read/write
+- Cons: overheads, every single piece of information to be passed, have to be copied from address space in first process to channel in OS, and then back to address space of second process
+
+Shared memory IPC
+- OS establishes a shared channel and maps it into each process address space (think of it as shared memory)
+- Processes directly read/write from this memory
+- Pros: OS not involved in communication. no overheads from OS side
+- Cons: No longer support standardized API, have to reimplement code for interface

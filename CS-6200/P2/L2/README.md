@@ -144,3 +144,158 @@ Lock(mutex) {
 } // unlock
 ```
 
+#### Pitfalls 
+
+##### Good Practices
+
+- Keep track of the mutex/cond variables used for each resource (i.e. leave a comment to state this mutex/cond variable used to protect which resource)
+- Ensure always lock and unlock
+- Use a single mutex to access a single resource
+- Ensure signal correct condition
+- Ensure that you are not using signal when broadcast is needed
+    - signal: only 1 thread will proceed, the rest will continue to wait ... possibly indefinitely, result in a deadlock scenario
+
+##### Spurious Wake-Ups
+
+- Unnecessary wake up to waiting threads
+- No impact to correctness but impact to performance
+- Happens when we structure the signal/broadcast within the lock block. During the signal/broadcast, possible that no threads can actually get the lock and do something as the lock might still be unreleased. Threads moved out of waiting queue before lock released.
+- Wasteful due to the context switches
+- Workaround is to put the signal/broadcast outside after the lock. But this does not work all the time.
+
+Replace
+```
+lock(counter_mutex) {
+    resource_counter = 0;
+    broadcast(read_phase);
+    signal(write_phase);
+} // unlock
+```
+
+With
+```
+lock(counter_mutex) {
+    resource_counter = 0;
+} // unlock
+broadcast(read_phase);
+signal(write_phase);
+```
+
+##### Deadlock
+
+2 or more competing threads are waiting on each other to complete but none of them ever do
+
+###### Example
+
+- Need both lock A and B to proceed. T1 has lock A and is waiting to get lock B. T2 has lock B and is waiting to get lock A. Results in an endless cycle.
+
+Solution
+1. Fine-grained locking: unlock A before lock B, basically at any point in time, only one can be locked (Does not work in the example since we need both)
+2. Get all the locks upfront, then release at the end (Too restrictive, limits parallelism)
+3. Maintain lock order (preferred approach)
+    - Must obtain lock A first
+    - then lock B
+
+Cycle = deadlock
+
+What can we do about deadlocks?
+- Deadlock prevention - expensive
+- Deadlock detection and recovery - rollback
+- Do nothing - if fail, just reboot
+
+#### Kernel vs User level threads
+
+##### Models
+
+1 to 1 Model
+- Each user level thread has a kernel level thread associated with it
+- Pros: 
+    - OS understands threads,sychronization, blocking etc
+- Cons:
+    - Must go to OS for all operations - expensive
+    - OS may have limits on policies, thread number etc
+    - Portability, need to find a specific kernel that supports your specific thread management policy
+
+Many to 1 Model
+- Multiple user level threads associated to 1 kernel level thread
+- Thread management library on user level that decides which user level thread is mapped to kernel level thread at any point in time
+- Pros:
+    - Portable, everything done on user level, dont depend on OS limits and policies
+- Cons:
+    - OS has no visibility to application needs
+    - OS might block entire process if 1 user level thread blocks on IO
+
+Many to Many Model
+- Some user level threads use the 1 to 1 Model
+- Other user level threads use the Many to 1 Model
+- Pros:
+    - best of both worlds
+    - can have bound or unbound threads
+- Cons:
+    - requires coordination between user and kernel level thread managers
+
+##### Multithreading Scope
+
+Kernel level (System scope)
+- System wide thread management
+- Managed by OS level thread managers
+
+User level (Process scope)
+- User level library that manages threads within a single process
+- Different processes managed by different instance of same library
+
+#### Multithreading Patterns
+
+##### Boss Workers
+
+- Boss thread: assign work to workers
+- Worker thread: perform entire task
+- Throughput of the system is limited by boss thread, must keep boss efficient
+- Throughput = 1 / boss time per order
+
+Pattern 1:
+- Boss assigns work by directly signalling specific worker
+- Pros:
+    - Workers dont need to synchronize
+- Cons
+    - Boss must track what each worker is doing
+    - Thoughput will go down
+
+Pattern 2 (Preferred):
+- Boss assigns work by placing work in producer consumer queue    
+- Pros:
+    - Boss dont need to know details about worker
+- Cons
+    - Queue synchronization, thread pool management
+    - Locality, might be more efficient to assign same type of task to same worker, but not possible since boss does not know what worker is doing
+- Worker pool can be static or dynamic
+- Workaround for locality issue is to have workers specialized for certain tasks instead of all workers created equal
+    - better locality
+    - better quality of service management, assign more threads to tasks that require higher quality of service
+    - Cons:
+        - load balancing, how many threads to assign for the different tasks?
+
+##### Pipeline
+
+- threads assigned subtask in system
+- entire task executed as pipeline of threads
+- multiple tasks concurrently in the system in different pipeline stages
+- each stage = thread pool
+- throughput = weakest link
+    - assign more threads to botteneck stage to balance it out
+- shared buffer based communication between stages
+- Pros:
+    - specialization and locality
+- Cons:
+    - balancing and synchronization overheads
+
+##### Layered
+
+- each layer is a group of related subtasks
+- end to end task must pass up and down through all layers
+- Pros:
+    - specialization
+    - less fine grained than pipeline
+- Cons
+    - not suitable for all applications
+    - synchronization

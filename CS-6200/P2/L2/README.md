@@ -74,3 +74,73 @@ Mutex data structure
     - owner
     - blocked threads
 
+#### Condition Variable
+
+Mechanism:
+
+Wait
+- Take in 2 params, mutex and condition variable
+- mutex is automatically released and reacquired on wait
+
+Signal
+- Takes in 1 param, condition
+- notify only 1 thread waiting on condition
+
+Broadcast
+- Takes in 1 param, condition
+- notify all waiting threads
+
+Condition Variable data structure
+- Stores the following information
+    - mutex reference
+    - waiting threads
+
+##### Reader Writer Problem
+
+Problem:
+- Issue in databases
+- Allow 0 or more readers to access the shared resource concurrently
+- Allow 0 or 1 writer to access the shared resource
+- Mutex lock is too restrictive for reader access.
+
+Solution:
+
+Use a proxy resource (helper variable)
+- State of shared resource
+    - free: resource counter = 0
+    - read: resource counter > 0 = number of readers
+    - write: resource counter = -1 
+
+Use mutex to control access to this proxy resource instead of access to the shared resource
+
+##### Critical Section
+
+Typical structure (No Proxy Variable)
+```
+Lock(mutex){
+    while(!predicate_indicating_access_ok)
+        wait(mutex, cond_var)
+    update state => update predicate
+    signal and/or broadcast(cond_var with correct waiting threads)
+} // unlock
+```
+
+Critical Section Structure with Proxy Variable
+
+Enter critical section
+```
+Lock(mutex) {
+    while(!predicate_for_access)
+        wait(mutex, cond_var)
+    update predicate
+} // unlock
+```
+
+Exit critical section
+```
+Lock(mutex) {
+    update predicate
+    signal/broadcast(cond_var)
+} // unlock
+```
+

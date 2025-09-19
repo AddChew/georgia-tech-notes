@@ -76,3 +76,55 @@ gcc -o main main.c -pthread
 ```
 
 3. Check return value of common functions
+
+### Mutex
+
+Data type
+```c
+pthread_mutex_t aMutex; // mutex type
+```
+
+Operations
+```c
+int pthread_mutex_lock(pthread_mutex_t *mutex); //lock
+int pthread_mutex_unlock(pthread_mutex_t *mutex); //lock
+
+int pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr); // set attr to NULL for defaults
+// mutex attributes == specifies mutex behaviour when a mutex is shared among processes
+int pthread_mutex_trylock(pthread_mutex_t *mutex) // try to lock mutex if it is free
+int pthread_mutex_destroy(pthread_mutex_t *mutex)
+```
+
+#### Pointers
+
+- Shared data should always be accessed through a single mutex
+- Mutex scope must be visible to all, global variable, outside of main
+- globally order the locks, for all threads lock mutex in order to prevent a deadlock
+- always unlock mutex
+
+### Condition Variables
+
+Data Structure
+```c
+pthread_cond_t aCond;
+```
+
+Wait
+```c
+int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
+```
+
+Signal/Broadcast
+```c
+int pthread_cond_signal(pthread_cond_t *cond);
+int pthread_cond_broadcast(pthread_cond_t *cond);
+
+int pthread_cond_init(pthread_cond_t *cond, const pthread_condattr_t *attr);
+int pthread_cond_destroy(pthread_cond_t *cond);
+```
+
+#### Pointers
+
+- Don't forget to notify waiting threads, signal broadcast the correct condition variable
+- When in doubt, use broadcast
+- Don't need mutex to signal/broadcast

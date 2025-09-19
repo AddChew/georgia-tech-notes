@@ -4,7 +4,7 @@
 #define NUMTHREADS 4
 
 void *hello(void *arg) {
-    printf("Hello world!");
+    printf("Hello Thread\n");
 }
 
 int main(void) {

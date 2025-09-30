@@ -75,3 +75,9 @@ Problem
 
 Solution
 - Abstraction layer via thread library on user level, which will provide library handling routine (library has full visibility of the state of the masks on user level threads)
+
+## Linux Tasks
+
+- Task: execution context in kernel level thread
+- Single threaded process = 1 task
+- Multi threaded process = many tasks

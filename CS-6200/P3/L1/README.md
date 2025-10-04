@@ -192,4 +192,52 @@ Completely Fair Scheduler (CFS) (default scheduler)
 
 ## Scheduling on Multiple CPU systems
 
-- try to schedule thread back on same CPU where it executed before to utilize the hot cache (keep tasks on same CPU as much as possible)
+- CPUs have their own private cache (L1/L2)
+- Shared last level cache (LLC)
+- Shared system memory (shared memory multiprocessor)
+- goal: try to schedule thread back on same CPU where it executed before to utilize the hot cache (keep tasks on same CPU as much as possible), cache affinity
+- hiearchical scheduler architecture
+    - load balancer to decide task goes to which cpu
+    - per cpu scheduler with per cpu runqueue, repeatedly schedule tasks on given cpu as much as possible
+- multiple memory nodes (non-uniform memory access - NUMA platform)
+    - goal: use closer memory node to a "socket" of multiple processors (NUMA aware scheduling)
+    - access to local memory node faster than access to remote memory node
+
+## Hyperthreading (simultaneous multithreading - SMT)
+
+- old design: 1 cpu, 1 register, have to save and restore state from memory
+- have multiple registers, nothing has to be saved or restored
+- still 1 cpu but very fast context switch
+
+Fedorova paper
+- co-schedule memory bound threads leads to wasted cpu cycles
+- solution:
+    - mix cpu and memory intensive threads
+    - avoid/limit contention of processor pipeline
+    - all components (cpu and memory) well utilized
+    - leads to interference and degradation for compute bound threads but minimal
+
+## CPU or Memory bound tasks?
+
+- use historical information
+- sleep time will not work
+    - thread is not sleeping when waiting on memory
+    - software takes too much time to compute
+- from hardware counters (i.e. last level cache miss), estimate what kind of resources a thread needs
+- memory bound, high cycles per instruction (CPI)
+- cpu bound, 1 or low CPI
+
+CPI experiment results (Only for a certain specific workload where tasks have spread out CPI, which is unrealistic)
+- tasks with mixed different CPI, processor pipeline well utilized, high IPC
+- tasks with uniform CPI, contention on some cores, wasted cycles on other cores, lower IPC
+- conclusion: 
+    - mixed CPI is good, high performance on system
+    - CPI is a great metric
+
+In practice, real workloads do not exhibit significant differences in their CPI values, so CPI will not be a useful metric.
+
+Takeaways
+- resource contention in SMTs for processor pipeline
+- hardware counters can be used to characterize workload
+- schedulers should be aware of resource contention not just load balancing
+- LLC usage would be a better metric, pick a mix that does not cause contention on last level cache usage

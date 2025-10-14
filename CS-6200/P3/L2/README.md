@@ -115,4 +115,54 @@ Linux kernel allocator
         - external fragmentation not an issue
 
 Demand paging
-- 
+- virtual memory >> physical memory, virtual memory page not always in physical memory
+- physical page frame saved and restored to/from secondary storage (i.e. disk)
+- demand paging: pages swapped in/out of memory and a swap partition (i.e. disk)
+- "pinned page", swapping disabled
+
+Memory swapping
+- when should pages be swapped out?
+    - OS will run page (out) daemon to look for pages that can be freed when above threshold
+    - when memory usage above threshold (high watermark)
+    - when cpu usage below threshold (low watermark)
+- which pages should be swapped out?
+    - pages that will not be used in future
+    - history based prediction
+        - least recently used (lru policy)
+        - access bit to track if page is referenced
+    - pages that do not need to be written out to secondary storage (i.e disk)
+        - avoid swap out to memory to reduce transfer overhead from physical memory to disk
+        - dirty bit to track if modified
+- linux
+    - supports parameters to tune thresholds, i.e. target page count
+    - categorize pages into different types, i.e. claimable, swappable
+    - "second chance" variation of LRU, perform two scans of set of pages before decision
+
+Copy on write (COW)
+- copy cost only paid when write operation performed
+- on process creation
+    - copy entire parent address space
+    - many pages are static, why keep multiple copies?
+    - avoid unnecessary copying by mapping new virtual address to original page, write protect original page, multiple processes pointing to same physical page frame
+    - if read only, save memory and time to copy
+    - if write required
+        - page fault generated and copy
+        - pay copy cost only when necessary
+
+Checkpointing
+- failure and recovery management technique
+- periodically save process state
+- can restart from checkpoint, recovery much faster
+- simple approach: pause process and copy
+- better approach:
+    - write-protect and copy everything once
+    - copy diffs of "dirtied" pages for incremental checkpoints
+    - rebuild from multiple diffs, or in background
+- used in debugging
+    - rewind-replay (RR)
+    - rewind = restart from checkpoint
+    - gradually go back to older checkpoints until error found
+- used in migration
+    - continue execution on another machine from checkpoint
+    - disaster recovery
+    - consolidation

@@ -89,7 +89,7 @@ Shared Memory IPC
         - key used to uniquely identify segment within the OS, any other process can refer to segment using the key
         - API
             - shmget (shmid, size, flag): create or open
-            - ftok (pathname, proj_id): same args produce same key
+            - ftok (pathname, proj_id): same args produce same key (i.e. shmid)
     2. Attach
         - Map virtual address of process to physical address of segment
         - Multiple processes can attach to same segment, share access to same physical page
@@ -127,4 +127,66 @@ Shared Memory IPC
 
 ### Shared Memory Synchronization
 
-- 
+Methods
+1. Mechanisms supported by process threading library (pthreads mutexes, condition variables)
+2. OS supported IPC for synchronization
+
+Must coordinate
+- number of concurrent access to shared segment
+- when data is available and ready for consumption (notification/signalling mechanism)
+
+Pthreads Synchronization for IPC
+- Use PTHREAD_PROCESS_SHARED keyword (in pthread_mutexattr_t, pthread_condattr_t) to share mutex/condition variables among processes
+
+Code Snippet
+```C
+// make shm data struct
+typedef struct {
+    pthread_mutex_t mutex;
+    char *data;
+} shm_data_struct, *shm_data_struct_t;
+
+// create shm segment
+seg = shmget(ftok(arg[0], 120), 1024, IPC_CREATE|IPC_EXCL);
+shm_address = shmat(seg, (void *) 0, 0);
+shm_ptr = (shm_data_struct_t)shm_address;
+
+// create and init mutext
+pthread_mutexattr_t(&m_attr);
+pthread_mutexattr_set_pshared(&m_attr, PTHREAD_PROCESS_SHARED);
+pthread_mutex_init(&shm_ptr.mutex, &m_attr);
+```
+
+Message Queues for IPC
+- Implements mutual exclusion via send/recv
+- Example protocol
+    - P1 writes data to shmem, sends "ready" to queue
+    - P2 receives message, reads data and sends "ok" message back
+- API
+    - msgsnd: send message to queue
+    - msgrcv: receive message from queue
+    - msgctl: perform message control operation
+    - msgget: get message identifier
+
+Semaphores for IPC
+- Binary semaphore, functions like mutex
+- if value == 0, stop/blocked
+- if value == 1, decrement (lock) and go/proceed
+
+IPC CLI Tools
+- ipcs: list all IPC facilities, -m displays info on shared memory IPC only
+- ipcrm: delete IPC facility, -m [shmid] deletes shm segment with given id
+
+### Shared Memory Design Considerations
+
+- Different API/mechanisms for synchronization
+- Role of OS is just to provide shared memory
+- Data passing/sync protocols are up to the programmer
+
+How many segments?
+- 1 large segment: manager to allocate/free memory from shared segment
+- Many small segments: preallocate pool of segments, queue of segment ids, commmunicate segment IDs among processes via other mechanisms (i.e. message queue)
+
+What size segments?
+- segment size = data size: works for well known static sizes, limits max data size that could be transferred between processes
+- segment size < message size: transfer data in rounds, include protocol to track progress

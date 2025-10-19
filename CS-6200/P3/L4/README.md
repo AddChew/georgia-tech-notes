@@ -175,7 +175,8 @@ Cache Coherence
 
 #### Test and Set Spinlock
 
-Code snippet
+Implementation 1: Test and Set Spinlock
+
 ```C
 spinlock_init(lock):
     lock = free; // 0 = free, 1 = busy
@@ -193,3 +194,82 @@ Pros
 
 Cons
 - Contention: processors go to memory on each spin
+
+Implementation 2: Test and Test and Set Spinlock (Spin on Read/Spin on cache value)
+
+```C
+// test using cache, only if cache lock free then execute atomic test_and_set to potentially reduce contention
+// spin on cache lock == busy
+// atomic if freed, test_and_set
+spinlock_lock(lock):
+    while((lock == busy) OR test_and_set(lock) == busy);
+```
+
+Pros
+- Slighly more overhead than test_and_set due to additional check, but acceptable latency and delay
+
+Cons
+- Non-cache-coherrent: no difference in contention as still have to access memory to retrieve cache value
+- Cache-coherrent + Write Update: OK
+- Cache-coherrent + Write Invalidate: Horrible, contention due to atomics, cache invalidated, have to access memory to fetch lock value due to cache miss, more contention
+
+#### Spinlock "Delay" Alternatives
+
+```C
+spinlock_lock(lock):
+    while((lock == busy) OR test_and_set(lock) == busy) {
+        // failed to get lock
+        while(lock == busy);
+        delay();
+    }
+```
+
+Everyone sees lock is free but not everyone attempts to acquire it
+
+Pros
+- Improvement in contention
+- Latency OK
+
+Cons
+- Delay much worse
+
+Alternative Delay Implementation
+
+```C
+spinlock_lock(lock):
+    while((lock == busy) OR test_and_set(lock) == busy) {
+        delay();
+    }
+```
+
+Delay after each lock reference
+- does not spin continuously
+- works on non-cache coherrent hardware
+- hurts delay even more
+
+Picking a Delay
+- Static delay
+    - based on fixed value, i.e. CPU ID
+    - simple approach
+    - unnecessary delay under low contention
+- Dynamic delay
+    - backoff-based
+    - random delay in a range that increases with "perceived" contention
+    - "perceived" == failed test_and_set()
+    - problem: delay after each reference will keep growing based on contention or length of critical section, need to be able to guard against this case where high failed test_and_set() cases is not due to high contention but rather long execution time of critical section (Don't need to bump up delay in this case)
+
+#### Queuing Lock
+
+- Seeks to solve the problem where everyone sees the lock is free at same time, if not everyone sees the lock is free at same time, then not everyone will try to acquire the lock at same time
+- Uses an array of "flags" with N elements
+    - N = number of processes
+    - every element has either of two states, has lock or must wait
+    - pointer to current lock holder
+    - pointer to last element in queue
+    - each arriving thread assigned a queue[ticket] == private lock
+        - queue[ticket] == must wait, spin
+        - queue[ticket] == has lock, enter critical section
+        - signal/set next lock holder on exit, queue[ticket + 1] = has lock
+- Cons
+    - assumes hardware support for read_and_increment atomic
+    - O(N) size for memory

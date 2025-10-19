@@ -102,3 +102,94 @@ write_unlock(m);
     - lock, check, ... happen automatically
 - On exit
     - unlock, check, signal ... happen automatically
+
+### Atomic Instructions
+
+Critical section with hardware supported synchronization
+
+Hardware specific
+- test_and_set
+- read_and_increment
+- compare_and_swap
+
+Guarantees
+- atomicity
+- mutual exclusion
+- queue all concurrent instructions but one
+
+test_and_set(lock)
+
+```C
+spin_lock(lock): //spin until free
+    while(test_and_set(lock) == busy);
+```
+
+- atomically returns tests original value and sets new value = 1 (busy)
+- first thread: test_and_set(lock) == 0, lock = free
+- next threads: test_and_set(lock) == 1, lock = busy
+
+### Shared Memory Multiprocessors (Symmetric Multiprocessors - SMPs)
+
+Can be bus-based or interconnect (I/C) based
+- expensive due to bus or I/C contention
+- expensive due to cache bypass and coherrence traffic
+
+Caches
+- CPU layer, each CPU has own cache
+- Hide memory latency, memory "further away" due to contention (i.e. multiple CPUs have access and can modify it)
+- no-write (write to memory only without writing to cache), write-through (write to both memory and cache), write-back (write to cache, write to memory is delayed, performed later)
+
+Cache Coherence
+- non-cache-coherrent (NCC): hardware does not synchronize cache values across CPUs automatically, have to be handled by software
+- cache-coherent (CC): hardware will take care of synchronizing cache values across CPUS automatically
+- write-invalidate (WI)
+    - hardware will invalidate cache value in other CPUs if it is modified, when other CPUs try to reference cache value, will result in cache miss, fetch from memory
+    - pros:
+        - lower bandwidth, amortize cost
+- write-update (WU): 
+    - hardware will update cache value in other CPUs when it is modified
+    - pros
+        - update available immediately
+- Atomics always issued to memory controller, bypass cache
+    - pros
+        - central entry point, references can be ordered and synchronized, remove race conditions
+    - cons
+        - takes much longer, generates coherence traffic regardless of change
+
+### Spinlock
+
+#### Performance Metrics
+
+- Reduce latency
+    - reduce time taken for thread to acquire a free lock
+    - ideally immediately execute single atomic instruction
+- Reduce wait time (delay)
+    - reduce time to stop spinning and acquire free lock (time to acquire free lock after waiting)
+    - ideally immediately
+- Reduce contention
+    - reduce bus/network/i-c traffic (requests)
+    - contention due to 
+        - atomic memory reference
+        - coherrence traffic
+    - ideally 0
+
+#### Test and Set Spinlock
+
+Code snippet
+```C
+spinlock_init(lock):
+    lock = free; // 0 = free, 1 = busy
+
+spinlock_lock(lock): // spin
+    while(test_and_set(lock) == busy);
+    
+spinlock_unlock(lock):
+    lock = free;
+```
+
+Pros
+- Minimal latency: just atomic
+- Minimal delay: continuously spinning on atomic
+
+Cons
+- Contention: processors go to memory on each spin

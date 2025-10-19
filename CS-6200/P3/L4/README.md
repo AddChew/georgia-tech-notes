@@ -261,6 +261,7 @@ Picking a Delay
 #### Queuing Lock
 
 - Seeks to solve the problem where everyone sees the lock is free at same time, if not everyone sees the lock is free at same time, then not everyone will try to acquire the lock at same time
+- Only 1 CPU/thread sees free lock and tries to acquire it
 - Uses an array of "flags" with N elements
     - N = number of processes
     - every element has either of two states, has lock or must wait
@@ -273,3 +274,48 @@ Picking a Delay
 - Cons
     - assumes hardware support for read_and_increment atomic
     - O(N) size for memory
+
+Pseudo Code of Implementation
+```C
+init:
+    flags[0] = has-lock;
+    flags[1, ..., p - 1] = must-wait;
+    queuelast = 0; // global variable
+
+lock:
+    myplace = r&inc(queuelast); // get ticket
+    // spin
+    while(flags[myplace mod p] == must-wait)
+    // enter critical section
+    flags[myplace mod p] = must-wait;
+
+unlock:
+    flags[myplace + 1 mod p] = has-lock;
+```
+
+Pros
+- Delay: directly signal next CPU/thread to run
+- Contention: better but requires cache coherrence and cache line aligned elements (each element of array has to be in a different cache line)
+
+Cons
+- Latency: more costly r&inc
+
+#### Performance Comparisons
+
+Setup
+- N processes running critical section 1M times in loop
+- Cache coherrent platform with write invalidate
+
+Metrics
+- Overhead compared to ideal performance based on theoretical limit based on no of crtitical sections to run
+
+High Load (high contention)
+- queue best, most scalable
+- test_and_test_and_set worst due to O(N^2) memory reference
+- static delay better than dynamic since under high loads, nicely balance out the atomic instruction execution times for static, for dynamic still have randomness with some collision
+- delay after every memory reference performs better than delay only after lock is released, avoid extra invalidations
+
+Low Load (low contention)
+- test_and_test_and_set performs best (low latency)
+- dynamic delay better than static (lower delay)
+- queuing lock worst (high latency due to r&inc)

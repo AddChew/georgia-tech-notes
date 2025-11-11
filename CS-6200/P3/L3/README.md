@@ -120,7 +120,7 @@ Shared Memory IPC
             - shm_open(): returns file descriptor, in tmpfs
     - Attach/Detach
         - API
-            - mmap() and unmmap(): map virtual to physical addresses
+            - mmap() and munmap(): map virtual to physical addresses
     - Destroy
         - API
             - shm_close(), shm_unlink()

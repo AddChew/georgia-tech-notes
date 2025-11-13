@@ -93,5 +93,47 @@ Example: Network Interface Card
 
 - relies on DMA controller hardware support
 - CPU "programs" the device
-    - via command registers
-    - via DMA controls
+    - command via command registers
+    - data movement via DMA controls
+
+Flow
+- write command to command register to request packet transmission from CPU to device
+- configure DMA controller with in-memory address and size of packet buffer
+- data buffer must be in physical memory until transfer completes (memory regions are pinned, non-swappable)
+- Pros: less steps, involves 1 store instruction (command) and 1 DMA configure
+- Cons: 
+    - DMA configuration is more complex, more cycles to configure
+
+For smaller transfers, programmed I/O better than DMA
+
+## Typical Device Access
+
+Flow
+- user process -> kernel: system call (i.e. send data, read file)
+- kernel -> driver: in-kernel stack (i.e. form packet, determine disk block)
+- driver -> device: driver invocation to perform configuration of request to device via programmed I/O or DMA (i.e. write request record, issue disk head movement/read)
+- device: perform request (i.e. perform transmission, read block from disk)
+- device -> driver -> kernel -> user process: response chain
+
+## OS Bypass
+
+In some cases:
+- device registers/data directly accessible to user level
+- OS configures then out of the way
+- "user-level driver" library (provided by device manufacturer)
+- OS retains coarse-grain control (i.e. enable/disable device, permission to add more processes to use device)
+- OS relies on device features, device has to have sufficient registers for OS to map some registers to user processes and some registers for OS to perform coarse-grain control operations
+- device has to have demultiplex capability - when multiple user processes access the device at same time, need to have a mechanism to send and receive to the correct processes (this mechanism typically handled by OS, but if we bypass OS, then device has to be able to handle it)
+
+## Sync vs Async Access
+
+Sync I/O: process blocks
+
+Async I/O:
+- process continues
+- later
+    - process checks and retrieves results
+    OR
+    - process is notified (by OS/device) that operation completed and results are ready - process doesnt need to poll
+
+## Block Device Stack

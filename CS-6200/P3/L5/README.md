@@ -137,3 +137,73 @@ Async I/O:
     - process is notified (by OS/device) that operation completed and results are ready - process doesnt need to poll
 
 ## Block Device Stack
+
+- processes use files - logical storage unit
+- kernel file system (FS)
+    - where, how to find and access file
+    - OS specifies standardized interface for file system (make it easy to modify the file system or even replace with a different file system)
+- generic block layer on top of driver
+    - OS standardized block interface to access different block devices and their drivers
+
+`ioctl` command used in linux to manipulate devices. `BLKGETSIZE` argument is used to determine the size of a block device.
+
+```c
+int fd;
+unsigned long numblocks = 0;
+
+fd = open(argv[1], O_RDONLY);
+ioctl(fd, BLKGETSIZE, &numblocks);
+close(fd);
+```
+
+## Virtual File System (VFS)
+
+Virtual file system interface abstraction in Linus to address:
+- files are on more than one device
+- device works better with different file system implementation
+- file not on local device (accessed via network)
+
+Abstractions
+- file = element on which VS operates
+- file descriptor = OS representation of file
+    - open, read, write, sendfile, lock, close, ...
+- inode = persistent data structure representation of file "index"
+    - list of all data blocks that correspond to file
+    - permissions, size of file, whether file is locked, ...
+    - file need not be stored contiguously on disk, blocks an be all over the storage media
+- dentry = directory entry, corresponds to single path component
+    - In linux, directory = special type of file
+    - VFS will create a dentry element for every path component: /users/add -> /, /users, /users/add
+    - dentry cache: VFS will maintain a cache of all directory entries that have been visited
+    - benefit of this is that next time need to access file in a directory that is cached, do not need to transverse the entire file path again
+    - only stored in-memory
+- superblock = filesystem specific information regarding FS layout (how FS has organized on disk the various persistent data elements) + metadata
+
+VFS on Disk
+- file = data blocks on disk
+- inode = track all of the blocks that belong to a file
+    - also resides on disk in some block
+- superblock = overall map of disk blocks
+    - inode blocks
+    - data blocks
+    - free blocks
+
+## ext2: Extended Filesystem Version 2
+
+Disk partition in ext2
+- first block, block 0 not used by Linux, contains code to boot computer
+- the rest divided into block groups
+- for each block group
+    - superblock = info about number of inodes, number of disk blocks, start of free blocks
+    - group descriptor = bitmaps, number of free nodes, number of directories
+    - bitmaps = tracks free and inodes
+    - inodes - 128 bytes data structure = 1 to max number, 1 per file, contains info like file owner, how to locate data blocks
+    - data blocks = file data
+
+## Inodes
+
+- uniquely numbered, identify a file via corresponding inode number identifier 
+- index of all disk blocks corresponding to a file
+- list of all blocks + other metadata of file
+- pros: easy to perform sequential or random access of file
+- cons: limit on file size to the total number of blocks that can be indexed using inode data structure

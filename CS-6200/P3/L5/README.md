@@ -207,3 +207,28 @@ Disk partition in ext2
 - list of all blocks + other metadata of file
 - pros: easy to perform sequential or random access of file
 - cons: limit on file size to the total number of blocks that can be indexed using inode data structure
+
+Solution to Cons: Inodes with indirect pointers
+- direct pointer: points to data block
+- indirect pointer: points to block of pointers
+- double indirect pointers: points to block of block of pointers
+- pros: small inode for large file size
+- cons: file access slowdown
+    - direct pointer: 2 disk access
+    - double indirect pointer: up to 4 disk access
+
+## Disk Access Optimizations
+
+- Caching/Buffering: reduce number of disk accesses
+    - buffer cache in main memory
+    - read/write from cache
+    - periodically flush to disk - fsync()
+- I/O scheduling: reduce disk head movement
+    - maximize sequential access and avoid random access
+    - i.e. write block 25, write block 17 -> scheduler will reorder and write 17 then 25 for sequential access
+- Prefetching: increase cache hits
+    - leverage locality
+    - i.e. read block 17 -> read also 18 and 19
+- Journaling/Logging: reduce random access
+    - "describe" write in log: block, offset, value etc
+    - periodically apply updates to proper disk locations

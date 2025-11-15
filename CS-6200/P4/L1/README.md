@@ -183,7 +183,7 @@ Supported Data Types
     - opaque (C byte): uninterpreted binary data
 - fixed length array: i.e. int data[80]
 - variable length array: 
-    - i.e. int data<80>, angular brackets denote the max length, translates into data structure with "len" and "val" fields; "val" field denotes the pointer address where the data structure is stored
+    - i.e. int data<80>, angular brackets denote the max length, translates into data structure with "len" and "val" fields; "val" field denotes the pointer address where the data structure is stored (C client level)
     - except for strings
         - string line<80>: C pointer to char
         - stored in memory like normal null terminated string
@@ -207,3 +207,27 @@ Following components are sent in message packet
 - Actual data
     - arguments or results
     - encoded into a byte stream based on data type
+
+XDR Encoding
+- XDR = IDL + encoding (binary representation of data "on the wire")
+- all data types are encoded in multiples of 4 bytes
+- big endian (big part of data comes first in memory) used as transmission standard
+
+Example
+- string data<10>, data = "hello"
+- in C client/server this takes 6 bytes, 'h', 'e', 'l', 'l', 'o', '\0'
+- in transmission buffer, this takes 12 bytes
+    - 4 bytes for length (i.e. length = 5)
+    - 5 bytes for chars
+    - 3 bytes for padding
+
+## Java Remote Method Invocation (RMI)
+- among address spaces in JVMs
+- matches Java OO semantics
+- IDL = Java (language specific)
+
+RMI runtime
+- remote reference layer
+    - unicast, broadcast, return first response, return if all match
+- transport layer
+    - TCP, UDP, shared memory

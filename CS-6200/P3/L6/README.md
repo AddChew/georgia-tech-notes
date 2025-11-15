@@ -110,3 +110,69 @@ Solutions
             - package context info
             - specify desired hypercall
             - trap to VMM
+
+## Memory Virtualization
+
+Full Virtualization
+- all guests expect contiguous physical memory, starting at 0
+- virtual (used by apps in guest) vs physical (guest thinks are physical addresses of resources) vs machine addresses (actual physical address on hardware) and page frame numbers
+
+Option 1
+- guest page table: VA -> PA
+- hypervisor: PA -> MA
+- too expensive! 
+
+Option 2
+- guest page table: VA -> PA
+- hypervisor shadow page table: VA -> MA
+- hypervisor maintains consistence
+
+Paravirtualization
+- guest aware of virtualization
+- no strict requirement on contiguous physical memory starting at 0
+- explicitly register page tables with hypervisor
+- "batch" page tables updates to reduce VM exits
+
+## Device Virtualization
+
+Passthrough model
+- approach: VMM level driver configures device access permissions
+- pros: VM provided with exclusive access to the device; VM can directly access the device (VMM - bypass)
+- cons: 
+    - device sharing difficult
+    - VMM must have exact type of device as what VM expects; guest VM and device driver in guest VM directly access device; guest vm device driver must be compatible with device
+    - VM migration tricky, VM and hardware no longer decoupled
+
+Hypervisor - Direct model
+- approach: VMM intercepts all device accesses
+- emulate device operation
+    - translate to generic I/O operation
+    - transverse VMM-resident I/O stack
+    - invoke VMM-resident driver
+- pros:
+    - VM decoupled from physical device
+    - sharing, migration, dealing with device specifics simpler
+- cons:
+    - latency of device operations
+    - device driver ecosystem complexities in hypervisor
+
+Split-Device Driver model
+- approach: device access control split between
+    - front end driver in guest VM
+    - back end driver in service VM (or host) hypervisor layer
+- modified guest VM driver: create messages that get passed to service VM, will not try to access the device directly (limited to paravirtualized guests)
+- pros: 
+    - eliminate emulation overhead
+    - allow more better management of shared devices
+
+## Hardware Virtualization
+
+Improvements to x86 after 2005
+- "close holes" in x86 ISA in terms of 17 non-virtualizable instructions
+- modes: root/non-root (or host and guest mode)
+- VM control structure
+    - VCPU - support added for hardware processor to understand and interpret info that describes state of virtual processors - VCPUs; easier for hypervisor to know if particular operation should not cause trap into root mode, just handled by privilege layer in non-root
+- extended page tables and tagged TLBs (translation lookaside buffer) with VM ids
+- multiqueue devices and interrupt routing
+- security and management support
+- additional instructions to support above features

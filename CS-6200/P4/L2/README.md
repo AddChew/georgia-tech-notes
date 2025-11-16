@@ -31,7 +31,7 @@ Access files via Virtual File System (VFS) interface.
     - every file operation pays network cost
     - limits server scalability since every operation has to be done by server
 
-### Compromise
+### Compromise - Practical Model
 
 1. allow clients to store parts of files locally (blocks)
     - pros: 
@@ -46,3 +46,46 @@ Access files via Virtual File System (VFS) interface.
 
 ## Stateless vs Stateful File Servers
 
+- stateless = keep no state
+    - ok with extreme models but cannot support 'practical' model
+    - pros:
+        - no resources are used on server side to maintain state
+    - cons: 
+        - cannot support caching and consistency management
+        - every request self contained, more bits transferred
+        - on failure, just restart
+
+- stateful = keep client state
+    - needed for 'practical' model to track what is cached/accessed
+    - pros:
+        - can support locking, caching, incremental operations
+    - cons:
+        - on failure, need checkpointing and recovery mechanisms
+        - overheads to maintain state and consistency, depends on caching mechanism and consistency protocol
+
+## Caching State in DFS
+
+- locally, clients maintain portion of state (i.e. file blocks)
+- locally, clients perform operations on cached state (i.e. open/read/write)
+- requires coherence mechanisms
+    - how: client/server driven - details depend on file sharing semantics
+    - when: on demand, periodically, on open
+- cache can be stored in
+    - in client memory
+    - on client storage device (HDD/SSD)
+    - in buffer cache in memory on server
+
+## File Sharing Semantics on DFS
+
+- unix semantics: every write visible immediately
+- session semantics (session = period between open and close):
+    - write back on close(), update on open()
+    - easy to reason, but may be insufficient for situations when clients want to concurrently share a file, write to it (have to open close repeatedly)
+- periodic updates
+    - client writes back periodically: clients have a "lease" on cached data (not necessarily exclusive like locking)
+    - server invalidates periodically: provides bounds on "inconsistency"
+    - augment with flush()/sync() API, provide option for client to explicitly flush updates to/sync state with server
+- immutable files
+    - never modify, always create new files
+- transactions
+    - all changes are atomic

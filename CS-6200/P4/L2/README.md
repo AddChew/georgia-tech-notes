@@ -89,3 +89,97 @@ Access files via Virtual File System (VFS) interface.
     - never modify, always create new files
 - transactions
     - all changes are atomic
+
+## Files vs Directories
+
+2 types of files:
+- regular files vs directories
+- choose different policies for each
+- i.e. session semantics for files, unix for directories
+- i.e. less frequent write back for files than directories
+
+## Replication vs Partitioning
+
+replication
+- each machine holds all files
+- pros:
+    - load balancing, availability, fault tolerance
+- cons:
+    - writes become more complex
+        - synchronously to all replicas
+        - or write to one, then propagated to others
+    - replicas must be reconciled if there are any differences among state of file on different replicas, i.e. voting
+
+partitioning
+- each machine has subset of files
+- pros:
+    - greater availability vs single server DFS (each server hold less files, able to respond to request faster due to lower workload)
+    - scalability with file system size (just add more machines to scale)
+    - single file writes simpler
+- cons:
+    - on failure, lose portion of data
+    - load balancing harder, if not balanced then hot spots possible
+
+## Network File System
+
+- use rpc to transmit the file contents; on open, server returns file handle
+- 'stale' file handle - happens when
+    - file/directory removed/renamed
+    - server crash
+
+Versions
+- NFS v3 = stateless but typically used with extra modules to support caching and logging
+- NFS v4 = stateful
+
+Caching
+- session based for non-concurrent usage
+- periodic upates
+    - default: 3s for files, 30s for directories
+- NFS v4: delegation to client for period of time (avoid update checks)
+
+Locking
+- lease based mechanism: server assigns client a time period which lock is valid; client responsibility to make sure it either releases the lock within leased amount of time or explicitly extend lock duration
+- NFS v4: supports reader writer lock (share reservation)
+
+## Sprite Distributed File System
+
+### Access pattern analysis
+- 33% of file accesses are writes: caching ok, but write through not sufficient
+- 75% of files open less than 0.5s, 90% of files open less than 10s: session semantics too high overhead
+- 20 - 30% of new data deleted within 30s, 50% of new data deleted within 10min: write back on close not really necesary
+- file sharing is rare: no need to optimize for concurrent access but must still support it
+
+### Design
+- cache with write back
+    - every 30s write back blocks that have not been modified for last 30s
+    - when another client opens file, get dirty blocks
+- every open goes to server, directories cannot be cached on client
+- on "concurrent write", disable caching for file
+
+### Sprite sharing semantics
+- sequential write sharing = caching and sequential semantics
+- concurrent write sharing = no caching
+
+### File access operations in Sprite
+- all open go through server
+- all clients cache blocks
+- writer keeps timestamps for each modified block
+- i.e. w2 sequential writer (sequential sharing)
+    - server contacts last writer for dirty blocks
+    - if w1 has closed file, update version
+    - w2 can now cache file
+- i.e. w3 concurrent writer (concurrent sharing)
+    - server contacts last writer for dirty blocks
+    - since w2 has not closed, disable caching
+
+Server, per file has to store the following info
+- readers
+- writer
+- version
+- cache?
+
+Client, per file has to store the following info
+- cache?
+- cached blocks
+- timer for each dirty block
+- version

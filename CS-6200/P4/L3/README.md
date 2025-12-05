@@ -69,3 +69,61 @@ Pitfalls
     - to present consistent view of distributed state
 
 ### Migration vs Replication
+
+DSM performance metric = access latency
+
+Achieve low latency through:
+- Migration
+    - makes sense for SRSW
+    - requires data movement (copy data over to remote node, incur overhead)
+- Replication (caching)
+    - more general
+    - requires consistency management
+    - for many "concurrent" writes, overheads may be too high
+
+### Consistency Management
+
+DSM similar to shared memory in symmetric multiprocessing (SMP)
+
+In SMP
+- write-invalidate: each time write to cache in one process, invalidate cache in other processes
+- write-update: each time write to cache in one process, update cache in other processes with new value
+- coherence operations triggered on each write, too high overhead
+
+Possible mechanisms
+- Push invalidations when data is written to
+    - proactive
+    - eager
+    - pessimistic
+- Pull modification info periodically
+    - on demand (reactive)
+    - lazy
+    - optimistic
+
+When the above mechanisms get triggered depends on the consistency model for the shared state
+
+### Architecture
+
+Page-based, OS supported
+- distributed nodes, each with own local memory contribution
+- pool of pages from all nodes form the global shared memory
+- every address in memory pool uniquely identified based on node identifier + page frame number of that particular memory location (node id + page id)
+- "home" node = node where page is located at (local)
+
+If MRMW
+- need local cache for performance (latency)
+- home (or manager) node drive coherence operations
+- all nodes responsible for part of distributed memory (state) management
+- "home" node
+    - keeps state: pages accessed, modified, caching enabled/disabled, locked ...
+    - mechanism to separate notion of home node from so-called owner
+        - owner is the node that currently own the pages, i.e. exclusive writer, node that can control all of the state updates and drive consistency related operations
+        - owner might be different from home node, owner might change with whoever is accessing the page currently (varies from time to time and node to node)
+        - role of home node is to track who is current owner of page
+
+Replication
+- for load balancing, performance, reliability
+- triplicate shared state on original machine, nearby machine and another remote machine
+- consistency of replicas controlled via home node or some designated management node
+
+### Indexing Distributed State

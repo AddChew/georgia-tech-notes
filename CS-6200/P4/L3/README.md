@@ -127,3 +127,34 @@ Replication
 - consistency of replicas controlled via home node or some designated management node
 
 ### Indexing Distributed State
+
+To identify where a page is, have to maintain some metadata. 
+
+Each page (object) has
+- address (node id + page frame number)
+- node id = "home" node
+
+Global map (replicated)
+- page (object) id, index into mapping table, map to home/manager node id
+- manager map available on each node
+- benefits of this approach is that if we want to update the managers of the pages, just have to update the mapping table, no need for changes to the page (object) identifiers
+
+Metadata for local pages (partitioned)
+- per page metadata distributed across managers
+
+### Implementation
+
+Problem: DSM must "intercept" accesses to DSM state
+- to send remote messages requesting access
+- to trigger coherence messages
+- overheads should be avoided for local, non-shared state (pages)
+- dynamically "engage" and "disengage" DSM when necessary, i.e. "engage" for remote memory access and "disengage" for local memory access
+
+Solution: use hardware memory management unit (MMU) support
+- trap in OS if mapping invalid or access is not permitted
+- perform access to remote memory, no valid mapping from local virtual address to remote physical address: trap generated and will pass page information to DSM layer to send message
+- cached content: DSM ensure write protected, if anyone try to modify it, will generate a trap and pass to DSM to perform necessary coherence operations
+- maintain other useful MMU information (i.e. dirty pages)
+
+### Consistency Model
+

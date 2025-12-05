@@ -83,7 +83,7 @@ Achieve low latency through:
 
 ### Consistency Management
 
-DSM similar to shared memory in symmetric multiprocessing (SMP)
+DSM similar to shared memory in shared memory processor (SMP)
 
 In SMP
 - write-invalidate: each time write to cache in one process, invalidate cache in other processes
@@ -158,3 +158,43 @@ Solution: use hardware memory management unit (MMU) support
 
 ### Consistency Model
 
+- Agreement between memory (state) and upper software layers
+- Memory behaves correctly if and only if software follows specific rules
+- Memory (state) guarantees to behave correctly
+    - access ordering
+    - propagation/visibility of updates
+
+#### Strict Consistency (Theoretical, impractical in application)
+
+- Every single update has to be immediately visible and everywhere visible
+- Ordering of updates needs to be preserved
+- In practice
+    - even on single shared memory processor (SMP), no guarantees on order of memory access operations without extra locking and synchronization
+    - in distributed systems, latency and message reorder/loss makes it impossible to guarantee strict consistency
+
+#### Sequential Consistency
+
+- Memory updates from different processors may be arbitrarily interleaved (not strict with the ordering of operations so long as the order is a possible permutation)
+- However, view of ordering of operations must be consistent across processes, if A then B, then across all processes, should also be A then B.
+- All other processes must see the exact same ordering of updates (same interleaving)
+- Operations from same process always appear in order they were issued
+
+#### Causal Consistency
+
+- Guarantee that it will detect possible causal relationships between updates, and if updates are causally related, then the memory will guarantee that those writes/updates operations will be correctly ordered
+- For writes that are not causally related (i.e. concurrent writes), no guarantees about ordering, perfectly legal to appear in arbitrary orders on different processors
+- Provides same guarantees as Sequential Consistency where writes performed on one processor will be visible in exact same order on other processors
+
+#### Weak Consistency
+
+- Weak consistency = support read/write + synchronization primitives
+- Synchronization points: operations that are available (read, write, sync)
+    - once a process syncs, it is guaranteed that all updates prior to sync point will be visible to process
+    - no guarantees what happens in between (for processes that havent sync, there is no guarantee that it will see the updates performed by others)
+    - what this means is that for two processes to see all the updates, both of them have to sync
+- Variations
+    - single sync operation for all states
+    - separate sync per subset of state
+    - separate "entry/acquire" vs "exit/release" operations, basically separate the pull and push. For entry, pull updates from other processes to yourself. For exit, push updates made by yourself to other processes.
+- Pros: limit data movement and coherence operations
+- Cons: maintain extra state for additional operations
